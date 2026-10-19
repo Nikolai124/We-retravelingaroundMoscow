@@ -1,7 +1,9 @@
+from django import forms
 from django.contrib import admin
 from places.models import Place, PlaceImage
 from adminsortable2.admin import SortableTabularInline, SortableAdminBase
 from django.utils.html import format_html
+from tinymce.widgets import TinyMCE
 # Register your models here.
 
 class PlaceImageInline(SortableTabularInline):
@@ -19,8 +21,16 @@ class PlaceImageInline(SortableTabularInline):
     image_preview.short_description = "Превью"
 
 
+class PlaceAdminForm(forms.ModelForm):
+    class Meta:
+        model = Place
+        fields = "__all__"
+        widgets = {"long_description": TinyMCE()}
+
+
 @admin.register(Place)
 class PlacesAdmin(SortableAdminBase, admin.ModelAdmin):
+    form = PlaceAdminForm
     list_display = ["name",]
     inlines = [PlaceImageInline]
 
