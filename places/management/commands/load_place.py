@@ -1,9 +1,12 @@
 import json
+import os
+from urllib.parse import unquote, urlsplit
 
 import requests
+from django.core.files.base import ContentFile
 from django.core.management.base import BaseCommand, CommandError
 
-from places.models import Place
+from places.models import Place, PlaceImage
 
 
 def read_json(source):
@@ -56,6 +59,31 @@ class Command(BaseCommand):
 
             action = "Создано" if created else "Обновлено"
             self.stdout.write(f"{action}: {place.name}")
+            self.load_images(place, data.get("imgs", []))
             loaded += 1
 
         self.stdout.write(self.style.SUCCESS(f"Загружено мест: {loaded}"))
+
+    def load_images(self, place, urls):
+        total = len(urls)
+        for number, url in enumerate(urls, start=1):
+            filename = os.path.basename(unquote(urlsplit(url).path))
+            name, extension = os.path.splitext(filename)
+            already_loaded = place.images.filter(
+                image__startswith=f"places/{name}",
+                image__endswith=extension,
+            )
+            if already_loaded.exists():
+                self.stdout.write(f"  [{number}/{total}] уже есть: {filename}")
+                continue
+
+            self.stdout.write(f"  [{number}/{total}] скачиваю: {url}")
+            try:
+                response = requests.get(url, timeout=10)
+                response.raise_for_status()
+            except requests.exceptions.RequestException as error:
+                self.stderr.write(self.style.WARNING(f"  [{number}/{total}] пропускаю, не удалось скачать: {error}"))
+                continue
+
+            place_image = PlaceImage(place=place, order=number)
+            place_image.image.save(filename, ContentFile(response.content), save=True)
