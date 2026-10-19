@@ -1,8 +1,6 @@
 import json
-from urllib.error import URLError
-from urllib.parse import quote, urlsplit, urlunsplit
-from urllib.request import urlopen
 
+import requests
 from django.core.management.base import BaseCommand, CommandError
 
 from places.models import Place
@@ -10,13 +8,16 @@ from places.models import Place
 
 def read_json(source):
     if source.startswith(("http://", "https://")):
-        parts = urlsplit(source)
-        url = urlunsplit(parts._replace(path=quote(parts.path, safe="/%")))
         try:
-            with urlopen(url, timeout=10) as response:
-                raw = response.read().decode("utf-8")
-        except URLError as error:
+            response = requests.get(source, timeout=10)
+            response.raise_for_status()
+        except requests.exceptions.Timeout:
+            raise CommandError(f"Сервер не ответил за 10 секунд: {source}")
+        except requests.exceptions.HTTPError:
+            raise CommandError(f"Ошибка {response.status_code} при загрузке {source}")
+        except requests.exceptions.RequestException as error:
             raise CommandError(f"Не удалось скачать {source}: {error}")
+        raw = response.content.decode("utf-8")
     else:
         try:
             with open(source, encoding="utf-8") as file:
