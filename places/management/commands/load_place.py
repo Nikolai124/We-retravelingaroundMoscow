@@ -66,14 +66,15 @@ class Command(BaseCommand):
 
     def load_images(self, place, urls):
         total = len(urls)
+        existing_images = list(place.images.values_list("image", flat=True))
         for number, url in enumerate(urls, start=1):
             filename = os.path.basename(unquote(urlsplit(url).path))
             name, extension = os.path.splitext(filename)
-            already_loaded = place.images.filter(
-                image__startswith=f"places/{name}",
-                image__endswith=extension,
+            already_loaded = any(
+                image.startswith(f"places/{name}") and image.endswith(extension)
+                for image in existing_images
             )
-            if already_loaded.exists():
+            if already_loaded:
                 self.stdout.write(f"  [{number}/{total}] уже есть: {filename}")
                 continue
 

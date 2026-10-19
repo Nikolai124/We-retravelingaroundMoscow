@@ -27,7 +27,7 @@ def main(request):
 
 
 def parse_place_details(request, place_id):
-    place = get_object_or_404(Place, pk=place_id)
+    place = get_object_or_404(Place.objects.prefetch_related("images"), pk=place_id)
     images_urls = [place_image.image.url for place_image in place.images.all()]
     payload = {
         'title': place.name,

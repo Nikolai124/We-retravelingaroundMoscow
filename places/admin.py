@@ -39,6 +39,7 @@ class PlacesAdmin(SortableAdminBase, admin.ModelAdmin):
 @admin.register(PlaceImage)
 class PlaceImageAdmin(admin.ModelAdmin):
     list_display = ["place", "image", "image_preview"]
+    list_select_related = ["place"]
     def image_preview(self, obj):
         if obj.image:
             return format_html(
