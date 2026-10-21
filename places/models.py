@@ -1,5 +1,6 @@
 from django.db import models
 
+
 class Place(models.Model):
     name = models.CharField("название", max_length=200)
     short_description = models.TextField("краткое описание")
@@ -18,4 +19,3 @@ class PlaceImage(models.Model):
 
     class Meta:
         ordering = ["order"]
-    
