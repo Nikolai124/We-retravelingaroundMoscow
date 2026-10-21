@@ -1,6 +1,9 @@
 # Logs
 logs
 venv/
+myvenv/
+media/
+staticfiles/
 db.sqlite3
 .env
 __pycache__/
